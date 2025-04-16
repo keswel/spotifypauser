@@ -9,11 +9,6 @@ Simple and lightweight C++ tool that utilizes xdotool to pause spotify by swipin
    g++ spotify-pauser.cpp -o spotify-pauser -lX11
 4. 
 
-# how to install
-1. clone repository.
-2. run the install.sh file (coming soon!)
-3. restart computer.
-
 # customizability
 You can choose the corner that will run the pause command. (located in Main() {}) 
 
