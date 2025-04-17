@@ -2,13 +2,23 @@
 Simple and lightweight C++ tool that utilizes xdotool to pause spotify by swiping the cursor in corner of screen.
 
 # how to install
-1. clone repository
-2. configure any desired settings (polling rate, desired swipe corner)
-3. compile c++ file using 
+1. clone repository.
+2. navigate to the cloned files (cd).
+3. run chmod to make installer executable.
    ```
-   g++ spotify-pauser.cpp -o spotify-pauser -lX11
-4. 
+   chmod +x install.sh
+4. run ./install.sh to install
+   ```
+   ./install.sh
+6. reboot computer
+7. done!
 
+# how to uninstall
+1. navigate to the program's folder (/spotifypauser)
+2. run ./install.sh --uninstall
+3. reboot computer
+4. done!
+   
 # customizability
 You can choose the corner that will run the pause command. (located in Main() {}) 
 
