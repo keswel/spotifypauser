@@ -181,6 +181,7 @@ int main() {
           strcpy(get_mode, "NULL");
           time_at_corner = 0;
           continue;
+          //TODO: ensure that the program pauses until cursor is out of the corner again.
         }
 
         // function that unpauses and pauses spotify.
