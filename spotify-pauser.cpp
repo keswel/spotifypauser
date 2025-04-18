@@ -8,12 +8,6 @@
 #include <stdio.h>
 
 char* get_focused_window() {
-  // TODO: fix issue with Spotify being saved as previous window. 
-  //    UPDATE: seems to be that "xdotool getactivewindow checks the one that has previous inputs.
-  //    NOTE: windowfocus does not work on gnome. (it will focus window but not move screen). 
-  //    
-  //    TRY: windowraise.
-  //
   static char window_id[64]; 
   
   FILE* fp = popen("xdotool getactivewindow", "r");
@@ -40,6 +34,7 @@ char* get_focused_window() {
 
 // jumps to spotify wherever it is on your WM
 void jump_to_spotify() {
+  // TODO: use xdotool instead of wmctrl to reduce dependencies.
   system("wmctrl -x -a spotify.Spotify");
 }
 
@@ -95,7 +90,6 @@ int main() {
   //    top right
   //    bottom left
   //    bottom right
-
   char pause_location_option[] = "bottom left";
 
   // opens display
