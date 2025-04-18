@@ -7,17 +7,30 @@
 #include <string.h>
 #include <stdio.h>
 
-char* get_focused_window() {
+
+char* get_focused_window(char mode[]) {
   static char window_id[64]; 
-  
-  FILE* fp = popen("xdotool getactivewindow", "r");
+  FILE* fp; 
+
+  if (strcmp(mode, "window") == 0) {
+    fp = popen("xdotool getactivewindow", "r");
+  }else if (strcmp(mode, "class") == 0){
+    
+   // fp = popen("xdotool getactivewindow", "r");
+    fp = popen("xdotool getwindowclassname $(xdotool getactivewindow)", "r");
+  }else{
+    printf("ERROR: mode not valid! (please use window or class)");
+    pclose(fp);
+    return NULL;
+  }
+
   if (fp == NULL) {
-    perror("popen failed");
+    perror("ERROR: popen failed");
     return NULL;
   }
 
   if (fgets(window_id, sizeof(window_id), fp) == NULL) {
-    perror("fgets failed");
+    perror("ERROR: fgets failed");
     pclose(fp);
     return NULL;
   }
@@ -92,6 +105,8 @@ int main() {
   //    bottom right
   char pause_location_option[] = "bottom left";
 
+  char get_mode[8];
+
   // opens display
   Display* display = XOpenDisplay(nullptr);
   char *focused_window;
@@ -120,12 +135,12 @@ int main() {
   
   // assumes spotify is already playing.
   bool is_spotify_paused = false; 
-  
+
   while (true) 
   {
     if (!display) 
     {
-      printf("Display is not found [null]!\n"); 
+      printf("ERROR: display is not found [null]!\n"); 
     }
     
     if (XQueryPointer(display, root, &returned_root, &returned_child, &root_x, &root_y, &win_x, &win_y, &mask)) 
@@ -153,12 +168,20 @@ int main() {
         }
 
         // saves window to go back to after jumping
-        focused_window = get_focused_window();
-
+        strcpy(get_mode, "window");
+        focused_window = strdup(get_focused_window(get_mode));
         printf("focused_window: %s\n", focused_window);
 
         // jump to spotify window 
         jump_to_spotify();
+        strcpy(get_mode, "class"); // check class of current window.
+        if (strcmp(get_focused_window(get_mode), "Spotify") != 0) {
+          printf("ERROR: Spotify not found (may not be running).\n");
+          free(focused_window);
+          strcpy(get_mode, "NULL");
+          time_at_corner = 0;
+          continue;
+        }
 
         // function that unpauses and pauses spotify.
         pause_spotify();
@@ -172,7 +195,7 @@ int main() {
         
         // sleep for 500ms after pausing 
         usleep(500000);
-        focused_window = NULL;
+        free(focused_window);
       }
     
       // sleep for polling_rate.
