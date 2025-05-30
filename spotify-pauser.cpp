@@ -1,5 +1,4 @@
 #include <iostream>
-#include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
 #include <stdio.h>
@@ -47,6 +46,7 @@ char pause_location_option[] = "bottom left";
   #include <X11/Xlib.h>
   #include <X11/Xutil.h>
   #include <termios.h>
+  #include <unistd.h>
   
   char* get_focused_window(char mode[]) {
     static char window_id[64]; 
@@ -237,6 +237,14 @@ char pause_location_option[] = "bottom left";
     SpotifyProcess(const std::string& n, DWORD p) : name(n), pid(p) {}
   };
 
+  // context struct for EnumWindows callback
+  struct WindowMatchContext {
+    DWORD pid;
+    HWND hwnd = nullptr;
+    std::wstring title;
+  };
+
+  // prints out all processes under "Spotify"
   void printSnapshotInfo(std::vector<SpotifyProcess> snapshots) {
     for (int i=0; i<snapshots.size(); i++) {
       std::cout << "Process #" << i << std::endl;
@@ -248,49 +256,90 @@ char pause_location_option[] = "bottom left";
   void grabSpotifySnapshot() {
     HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     
-    // maybe store objects of each process in here?
-    // class (process)
-    //  name 
-    //  pid 
-    std::vector<SpotifyProcess> spotifySnapshots; 
-
-
     if (hSnapshot == INVALID_HANDLE_VALUE) {
         std::cerr << "Failed to create process snapshot.\n";
+        return;
     }
 
     PROCESSENTRY32 pe32;
     pe32.dwSize = sizeof(PROCESSENTRY32);
 
-    if (Process32First(hSnapshot, &pe32)) {
-        do {
-            std::string exeName = pe32.szExeFile;
-            std::string lowerName = exeName;
-            std::transform(lowerName.begin(), lowerName.end(), lowerName.begin(), ::tolower);
+    // check if Process32First fails
+    if (!Process32First(hSnapshot, &pe32)) {
+        std::cerr << "Failed to get first process.\n";
+        CloseHandle(hSnapshot);
+        return;
+    }
 
-            if (lowerName.find("spotify") != std::string::npos) {
-                // append to vector
-                spotifySnapshots.push_back(SpotifyProcess(exeName, pe32.th32ProcessID));
+    std::vector<SpotifyProcess> spotifySnapshots;
 
-                // print out process info
-                std::cout << "Found process: " << (spotifySnapshots.back()).name
-                          << " (PID: " << (spotifySnapshots.back()).pid << ")\n";
-            }
-        } while (Process32Next(hSnapshot, &pe32));
+    do {
+        std::string exeName = pe32.szExeFile;
+        std::string lowerName = exeName;
+        std::transform(lowerName.begin(), lowerName.end(), lowerName.begin(), ::tolower);
+
+        if (lowerName.find("spotify") != std::string::npos) {
+            // append to vector
+            spotifySnapshots.push_back(SpotifyProcess(exeName, pe32.th32ProcessID));
+
+            // print out process info
+            std::cout << "Found process: " << (spotifySnapshots.back()).name
+                      << " (PID: " << (spotifySnapshots.back()).pid << ")\n";
+        }
+    } while (Process32Next(hSnapshot, &pe32));
+
+    HWND hwnd = findMainSpotifyWindow(spotifySnapshots);
+    if (hwnd) {
+        std::cout << L"Found main Spotify window: " << hwnd << std::endl;
+    } else {
+        std::cout << L"No active Spotify window found." << std::endl;
     }
 
     printSnapshotInfo(spotifySnapshots);
 
     CloseHandle(hSnapshot);
   }
-  
 
-  HWND findMainSpotifyWindow() {
+  // checks if window belongs to a target PID and has a meaningful title
+  BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam) {
+      WindowMatchContext* context = reinterpret_cast<WindowMatchContext*>(lParam);
+      DWORD windowPID = 0;
+      GetWindowThreadProcessId(hwnd, &windowPID);
 
- 
+      if (windowPID == context->pid && IsWindowVisible(hwnd)) {
+          TCHAR buffer[256];
+          GetWindowText(hwnd, buffer, sizeof(buffer) / sizeof(TCHAR));
+          std::wstring title = buffer;
 
+          if (!title.empty() && title != L"Spotify") {
+              context->hwnd = hwnd;
+              context->title = title;
+              return FALSE; // Found a window we care about
+          }
+      }
 
+      return TRUE; // Keep looking
+  }  itle != L"Spotify") {
+  ;  are about
+   
+  }  
 
+  // Finds the main Spotify window (with title not equal to "Spotify")
+  HWND findMainSpotifyWindow(std::vector<SpotifyProcess> snapshots) {
+      for (const auto& proc : snapshots) {
+          WindowMatchContext context;
+          context.pid = proc.pid;
+
+          EnumWindows(EnumWindowsProc, reinterpret_cast<LPARAM>(&context));
+
+          if (context.hwnd != nullptr) {
+              std::wcout << L"Matched window for PID " << proc.pid
+                        << L" with title: " << context.title << std::endl;
+              return context.hwnd;
+          }
+      }
+
+      return nullptr;
   }
 
   void pauseSpotify() {
