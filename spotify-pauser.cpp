@@ -88,17 +88,16 @@ char pause_location_option[] = "bottom left";
 
   // jumps to spotify wherever it is on your WM
   void jump_to_spotify() {
-    // TODO: use xdotool instead of wmctrl to reduce dependencies.
     system("wmctrl -x -a spotify.Spotify");
   }
 
-  // returns to orgininal saved window.
+  // returns to original saved window.
   void return_to_window(char str[]) {
     char command[512];
 
     // uses window id (from window stack) to create command
     snprintf(command, sizeof(command), "xdotool windowactivate %s", str); 
-    // execute commmand
+    // execute command
     system(command);
     printf("executed: xdotool windowactivate %s\n", str); 
   }
