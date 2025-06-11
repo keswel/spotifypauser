@@ -5,6 +5,7 @@
 #include <chrono>
 #include <thread>
 
+
 // default polling rate: 50000 microseconds | eq. 50ms.
 int polling_rate = 50000;
     
@@ -214,7 +215,9 @@ char pause_location_option[] = "bottom left";
     
     return 0;
   } 
-#elif defined(_WIN32) 
+#elif defined(_WIN32)
+
+
   // windows build!
   #include <Windows.h>
   #include <chrono>
@@ -223,11 +226,10 @@ char pause_location_option[] = "bottom left";
   #include <string>
   #include <algorithm>
   #include <vector>
-  #include <set>
-  #include <mmdeviceapi.h>  
+  #include <mmdeviceapi.h>
   #include <audiopolicy.h>
   #include <endpointvolume.h>
-  
+  #pragma comment(lib, "Ole32.lib")
   // stores spotify data.
   struct SpotifyProcess{
     std::string name;
@@ -237,15 +239,18 @@ char pause_location_option[] = "bottom left";
     SpotifyProcess(const std::string& n, DWORD p) : name(n), pid(p) {}
   };
 
+  HWND findMainSpotifyWindow(std::vector<SpotifyProcess> snapshots);
+  void pauseSpotify(std::vector<SpotifyProcess> snapshots);
+
   // context struct for EnumWindows callback
   struct WindowMatchContext {
     DWORD pid;
     HWND hwnd = nullptr;
-    std::wstring title;
+    std::string title;
   };
 
   // prints out all processes under "Spotify"
-  void printSnapshotInfo(std::vector<SpotifyProcess> snapshots) {
+  void printSnapshotInfo(std::vector<SpotifyProcess> snapshots)  {
     for (int i=0; i<snapshots.size(); i++) {
       std::cout << "Process #" << i << std::endl;
       std::cout << (snapshots[i]).name << " (PID: " << (snapshots[i]).pid << ")" << std::endl;
@@ -253,12 +258,12 @@ char pause_location_option[] = "bottom left";
   } 
 
   // grabs all processes under "Spotify"
-  void grabSpotifySnapshot() {
+  std::vector<SpotifyProcess> grabSpotifySnapshot() {
     HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     
     if (hSnapshot == INVALID_HANDLE_VALUE) {
         std::cerr << "Failed to create process snapshot.\n";
-        return;
+        return std::vector<SpotifyProcess>();
     }
 
     PROCESSENTRY32 pe32;
@@ -268,7 +273,7 @@ char pause_location_option[] = "bottom left";
     if (!Process32First(hSnapshot, &pe32)) {
         std::cerr << "Failed to get first process.\n";
         CloseHandle(hSnapshot);
-        return;
+        return std::vector<SpotifyProcess>();
     }
 
     std::vector<SpotifyProcess> spotifySnapshots;
@@ -290,14 +295,13 @@ char pause_location_option[] = "bottom left";
 
     HWND hwnd = findMainSpotifyWindow(spotifySnapshots);
     if (hwnd) {
-        std::cout << L"Found main Spotify window: " << hwnd << std::endl;
+        std::cout << "Found main Spotify window: " << hwnd << std::endl;
     } else {
-        std::cout << L"No active Spotify window found." << std::endl;
+        std::cout << "No active Spotify window found." << std::endl;
     }
 
-    printSnapshotInfo(spotifySnapshots);
-
     CloseHandle(hSnapshot);
+    return spotifySnapshots;
   }
 
   // checks if window belongs to a target PID and has a meaningful title
@@ -309,22 +313,19 @@ char pause_location_option[] = "bottom left";
       if (windowPID == context->pid && IsWindowVisible(hwnd)) {
           TCHAR buffer[256];
           GetWindowText(hwnd, buffer, sizeof(buffer) / sizeof(TCHAR));
-          std::wstring title = buffer;
+          std::string title = std::string(buffer, strlen(buffer));
 
-          if (!title.empty() && title != L"Spotify") {
+          if (!title.empty() && title != "Spotify") {
               context->hwnd = hwnd;
               context->title = title;
               return FALSE; // Found a window we care about
           }
       }
 
-      return TRUE; // Keep looking
-  }  itle != L"Spotify") {
-  ;  are about
-   
-  }  
+      return TRUE; // keep looking
+  }
 
-  // Finds the main Spotify window (with title not equal to "Spotify")
+  // finds the main Spotify window (with title not equal to "Spotify")
   HWND findMainSpotifyWindow(std::vector<SpotifyProcess> snapshots) {
       for (const auto& proc : snapshots) {
           WindowMatchContext context;
@@ -333,8 +334,8 @@ char pause_location_option[] = "bottom left";
           EnumWindows(EnumWindowsProc, reinterpret_cast<LPARAM>(&context));
 
           if (context.hwnd != nullptr) {
-              std::wcout << L"Matched window for PID " << proc.pid
-                        << L" with title: " << context.title << std::endl;
+              std::cout << "Matched window for PID " << proc.pid
+                        << " with title: " << context.title << std::endl;
               return context.hwnd;
           }
       }
@@ -342,27 +343,32 @@ char pause_location_option[] = "bottom left";
       return nullptr;
   }
 
-  void pauseSpotify() {
-      HWND spotifyWindow = findMainSpotifyWindow();
+  void pauseSpotify(std::vector<SpotifyProcess> snapshots) {
+    // main Spotify window that is playing music
+    HWND spotifyWindow = findMainSpotifyWindow(snapshots);
 
-      if (spotifyWindow != NULL) {
-          std::cout << "Targeting main Spotify window: " << spotifyWindow << std::endl;
+    if (spotifyWindow == nullptr) {
+      std::cout << "Could not find Spotify window." << std::endl;
+      return;
+    }
 
-          // Store current window
-          HWND currentWindow = GetForegroundWindow();
+    std::cout << "Targeting main Spotify window: " << spotifyWindow << std::endl;
 
-          // Bring Spotify to front
-          SetForegroundWindow(spotifyWindow);
-          Sleep(200);
+    // bring the main Spotify window to the foreground
+    ShowWindow(spotifyWindow, SW_RESTORE);  // restore if minimized
+    SetForegroundWindow(spotifyWindow);     // bring to front
 
-          // Send spacebar key
-          keybd_event(VK_SPACE, 0, 0, 0);
-          keybd_event(VK_SPACE, 0, KEYEVENTF_KEYUP, 0);
+    // simulate spacebar key press
+    keybd_event(VK_SPACE, 0, 0, 0);                  // Key down
+    keybd_event(VK_SPACE, 0, KEYEVENTF_KEYUP, 0);    // Key up
+    std::cout << "Sent spacebar to main Spotify window" << std::endl;
 
-          std::cout << "Sent spacebar to main Spotify window" << std::endl;
-      } else {
-          std::cout << "Main Spotify window not found" << std::endl;
-      }
+    Sleep(200);
+  }
+
+  void switchToWindow(HWND hwnd) {
+    ShowWindow(hwnd, SW_SHOW);
+    SetForegroundWindow(hwnd);
   }
 
   int main() {
@@ -393,14 +399,14 @@ char pause_location_option[] = "bottom left";
         // get cursor_pos.
         GetCursorPos(&cursor_pos);
 
-        std::cout << "Cursor x: " << cursor_pos.x << ", Cursor Y: " << cursor_pos.y << std::endl;
+        // std::cout << "Cursor x: " << cursor_pos.x << ", Cursor Y: " << cursor_pos.y << std::endl;
 
         // increment time_at_corner for the amount of seconds cursor is on bottom left corner
         if ((cursor_pos.x == target_x) && (cursor_pos.y == target_y)) 
         {
           time_at_corner++;
         }else{
-          time_at_corner == 0;
+          time_at_corner = 0;
         }
         
         if (time_at_corner >= 2) 
@@ -419,41 +425,27 @@ char pause_location_option[] = "bottom left";
           HWND foreground_window = GetForegroundWindow();
           std::cout << "Active window: " << foreground_window << std::endl;
 
-          // jump to spotify window 
-          //jump_to_spotify();
-          
-          // maybe not necessary?. 
-          // if GetForegroundWindow() == foreground_window
-          //  return
-          // else
-          //  spotify open.
-          /* strcpy(get_mode, "class"); // check class of current window.
-          if (strcmp(get_focused_window(get_mode), "Spotify") != 0) {
-            printf("ERROR: Spotify not found (may not be running).\n");
-            free(focused_window);
-            strcpy(get_mode, "NULL");
-            time_at_corner = 0;
-            continue;
-          }
-          */
+          // save all instances of spotify (pid & name)
+          std::vector<SpotifyProcess> spotifySnapshots = grabSpotifySnapshot();
 
-          // function that unpauses and pauses spotify.
- //         pauseSpotify();
-          grabSpotifySnapshot();
-          // returns to orignial window
- //         return_to_window(focused_window);
+          // if vector empty continue else >>
+          if (!spotifySnapshots.empty()) {
+            printSnapshotInfo(spotifySnapshots);
+            pauseSpotify(spotifySnapshots);
+
+            switchToWindow(foreground_window);
+            Sleep(100);
+          }
 
           // prevents forever loop
           time_at_corner = 0;
           
           // sleep for 500ms after pausing 
           Sleep(500);
-//          free(focused_window);
         }
       
         // sleep for polling_rate.
-        // std::this_thread::sleep_for(std::chrono::microseconds(polling_rate)); 
-        Sleep(polling_rate / 1000); 
+        Sleep(polling_rate / 1000);
       }
     
     } else{
