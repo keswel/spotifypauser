@@ -27,13 +27,17 @@ Simple and lightweight C++ tool that utilizes xdotool and wmctrl to quickly paus
    ![image](https://github.com/user-attachments/assets/075c7d1b-c91d-4ed3-bf36-eb661120a50f)
 
 # Requirements
-C++
-xdotool
-x11
-wmctrl
+Windows:
+   -C++
+Linux:
+   -C++
+   -xdotool
+   -x11
+   -wmctrl
 
 # Compatibility
-Currently only Linux is supported. BUT, Windows functionality will be implemented soon.
+Fully compatible with Linux.
+Limited compatibility with Windows.
 
 # Future
 A simple GUI will be available in the future to help configure settings.
