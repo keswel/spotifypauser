@@ -220,16 +220,12 @@ char pause_location_option[] = "bottom left";
 
   // windows build!
   #include <Windows.h>
-  #include <chrono>
-  #include <thread>
   #include <TlHelp32.h>
   #include <string>
   #include <algorithm>
   #include <vector>
-  #include <mmdeviceapi.h>
   #include <audiopolicy.h>
-  #include <endpointvolume.h>
-  #pragma comment(lib, "Ole32.lib")
+
   // stores spotify data.
   struct SpotifyProcess{
     std::string name;
@@ -240,7 +236,7 @@ char pause_location_option[] = "bottom left";
   };
 
   HWND findMainSpotifyWindow(std::vector<SpotifyProcess> snapshots);
-  void pauseSpotify(std::vector<SpotifyProcess> snapshots);
+  void pauseSpotify(const std::vector<SpotifyProcess> &snapshots);
 
   // context struct for EnumWindows callback
   struct WindowMatchContext {
@@ -250,7 +246,7 @@ char pause_location_option[] = "bottom left";
   };
 
   // prints out all processes under "Spotify"
-  void printSnapshotInfo(std::vector<SpotifyProcess> snapshots)  {
+  void printSnapshotInfo(const std::vector<SpotifyProcess> snapshots)  {
     for (int i=0; i<snapshots.size(); i++) {
       std::cout << "Process #" << i << std::endl;
       std::cout << (snapshots[i]).name << " (PID: " << (snapshots[i]).pid << ")" << std::endl;
@@ -326,7 +322,7 @@ char pause_location_option[] = "bottom left";
   }
 
   // finds the main Spotify window (with title not equal to "Spotify")
-  HWND findMainSpotifyWindow(std::vector<SpotifyProcess> snapshots) {
+  HWND findMainSpotifyWindow(const std::vector<SpotifyProcess> snapshots) {
       for (const auto& proc : snapshots) {
           WindowMatchContext context;
           context.pid = proc.pid;
@@ -343,7 +339,7 @@ char pause_location_option[] = "bottom left";
       return nullptr;
   }
 
-  void pauseSpotify(std::vector<SpotifyProcess> snapshots) {
+  void pauseSpotify(const std::vector<SpotifyProcess> &snapshots) {
     // main Spotify window that is playing music
     HWND spotifyWindow = findMainSpotifyWindow(snapshots);
 
@@ -374,23 +370,17 @@ char pause_location_option[] = "bottom left";
   int main() {
     POINT cursor_pos;
     
-    // assumes spotify is already playing.
-    bool is_spotify_paused = false; 
-
-    // used for mouse tracking
-    int root_x, root_y;
-    int win_x, win_y;
-    
     // finds width & height of screen for targetting
     int width = GetSystemMetrics(SM_CXSCREEN);
     int height = GetSystemMetrics(SM_CYSCREEN);
     int target_x, target_y;
 
-    int time_at_corner = 0;
-
     assign_targets(width, height, pause_location_option, &target_x, &target_y); 
     // if cursor_pos is found
     if (GetCursorPos(&cursor_pos)) {
+      // assumes spotify is already playing.
+      bool is_spotify_paused = false;
+      int time_at_corner = 0;
       std::cout << "Cursor x: " << cursor_pos.x << ", Cursor Y: " << cursor_pos.y << std::endl;
       std::cout << "Polling rate: " << polling_rate << std::endl;
       std::cout << "Screen Size: " << width << " x " << height << std::endl;
