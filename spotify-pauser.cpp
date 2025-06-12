@@ -437,8 +437,6 @@ char pause_location_option[] = "bottom left";
         Sleep(polling_rate / 1000);
       }
     
-    } else{
-      std::cout << "Error getting cursor position." << std::endl;
     }
     return 0;
   }
