@@ -1,9 +1,22 @@
 # SpotifyPauser
 Simple and lightweight C++ tool that utilizes xdotool and wmctrl to quickly pause spotify by swiping the cursor in corner of screen.
 
-# How to Install
+# Windows:
+### Install
+1. Clone repository.
+2. Execute Win_Install.ps1
+   * NOTE: You may need to right click and select "Run with Powershell"
+3. Done!
+### Uninstall
+1. Execute Win_Uninstall.ps1
+   * NOTE: You may need to right click and select "Run with Powershell"
+2. Done!
+
+# Linux: 
+### Install
 1. Clone repository.
 2. Configure any desired settings (polling rate, desired swipe corner).
+   * NOTE: Configuration options are within spotify-pauser.cpp file.
 3. Compile c++ file using chmod.
    ```
    chmod +x install.sh
@@ -13,7 +26,7 @@ Simple and lightweight C++ tool that utilizes xdotool and wmctrl to quickly paus
 6. Reboot computer.
 7. Done!
 
-# How to Uninstall
+### Uninstall
 1. Navigate to the program's folder (/spotifypauser).
 2. Run ./install.sh --uninstall
 3. Reboot computer.
@@ -28,19 +41,18 @@ Simple and lightweight C++ tool that utilizes xdotool and wmctrl to quickly paus
 
 # Requirements
 Windows:
-   -C++
-Linux:
-   -C++
-   -xdotool
-   -x11
-   -wmctrl
+   * C++
+
+Linux: 
+   * C++
+
+   * xdotool
+
+   * x11
+
+   * wmctrl
 
 # Compatibility
-Fully compatible with Linux.
-Limited compatibility with Windows.
+Fully compatible with Linux & Windows.
 
-# Future
-A simple GUI will be available in the future to help configure settings.
-
-Install setup will be automated for any system.
 
