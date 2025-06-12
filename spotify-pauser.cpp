@@ -223,7 +223,6 @@ char pause_location_option[] = "bottom left";
   #include <string>
   #include <algorithm>
   #include <vector>
-  #include <audiopolicy.h>
 
   // stores spotify data.
   struct SpotifyProcess{
