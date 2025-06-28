@@ -173,15 +173,16 @@ int main() {
         printf("focused_window: %s\n", focused_window);
 
         // jump to spotify window 
+        printf("jumping to spotify\n");
         jump_to_spotify();
         strcpy(get_mode, "class"); // check class of current window.
+        usleep(90000);
         if (strcmp(get_focused_window(get_mode), "Spotify") != 0) {
           printf("ERROR: Spotify not found (may not be running).\n");
           free(focused_window);
           strcpy(get_mode, "NULL");
           time_at_corner = 0;
           continue;
-          //TODO: ensure that the program pauses until cursor is out of the corner again.
         }
 
         // function that unpauses and pauses spotify.
