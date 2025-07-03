@@ -1,7 +1,6 @@
 # SpotifyPauser
 Lightweight C++ tool that utilizes xdotool and wmctrl to quickly pause spotify when cursor is swiped to corner of screen.
-https://github.com/user-attachments/assets/41f8d5e3-571a-4aeb-b399-9e5734279230
-
+https://youtu.be/5tVAsgq6ALA
 
 # How to Install
 1. Clone repository.
