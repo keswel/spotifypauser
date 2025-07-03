@@ -9,14 +9,13 @@ https://github.com/user-attachments/assets/1afc6bb7-cb4e-4ce3-acff-9c6a1cbba294
 # How to Install
 1. Clone repository.
 2. Configure any desired settings (polling rate, desired swipe corner).
-3. Compile c++ file using chmod.
-   ```
+3. 
+   ```bash
    chmod +x install.sh
-4. Run ./install.sh to install.
-   ```
    ./install.sh
-6. Reboot computer.
-7. Done!
+   ```
+4. Reboot computer.
+5. Done!
 
 # How to Uninstall
 1. Navigate to the program's folder (/spotifypauser).
