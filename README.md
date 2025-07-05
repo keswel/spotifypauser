@@ -37,7 +37,7 @@ x11
 wmctrl
 
 # Compatibility
-Currently only Linux is supported. BUT, Windows functionality will be implemented soon.
+Compatible with Linux and Windows (see windows-env branch).
 
 # Future
 A simple GUI will be available in the future to help configure settings.
